@@ -11,6 +11,8 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showWarning, setShowWarning] = useState(false);
   const logoutTimer = useRef(null);
 
   const INACTIVITY_LIMIT = 60 * 60 * 1000; // 1 hour
@@ -25,7 +27,6 @@ export const AuthProvider = ({ children }) => {
     if (logoutTimer.current) clearTimeout(logoutTimer.current);
     logoutTimer.current = setTimeout(() => {
       setShowWarning(true);
-      // After 2 minutes if no activity, logout
       setTimeout(() => logout(), 2 * 60 * 1000);
     }, INACTIVITY_LIMIT - 2 * 60 * 1000);
   }, [logout]);
@@ -35,16 +36,23 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
-  // Load saved user on startup
+  const verifyUser = async (user) => {
+    const res = await fetch(`/api/auth/verify?userId=${user.userId}`);
+    return res.ok;
+  };
+
+  //  Load saved user before rendering app
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("user"));
-    if (savedUser?.userId) setUser(savedUser);
+    if (savedUser?.userId) {
+      verifyUser(savedUser); //Fix: Check if any errors are raised before setting user
+      setUser(savedUser);
+    }
+    setLoading(false); //  mark as done
   }, []);
 
-  // Only run timer when logged in
   useEffect(() => {
     if (!user) return;
-
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
     resetTimer();
@@ -56,12 +64,9 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user, resetTimer]);
 
-  // Inactivity warning state
-  const [showWarning, setShowWarning] = useState(false);
-
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, showWarning, setShowWarning }}
+      value={{ user, loading, login, logout, showWarning, setShowWarning }}
     >
       {children}
     </AuthContext.Provider>

@@ -21,7 +21,7 @@ const Sidebar = ({ navOpen, toggleNav, isMobile, userRole }) => {
       path: "/assignments",
       roles: ["teacher", "student"],
     },
-    { label: "Exams", path: "/exams", roles: ["admin", "teacher"] },
+    { label: "Exams", path: "/exams", roles: ["admin", "teacher", "student"] },
     {
       label: "Reports",
       path: "/reports",

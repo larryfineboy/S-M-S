@@ -21,15 +21,17 @@ import InactivityWarning from "./components/InactivityWarning";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ✅ Protects pages from unauthenticated access
+// Protects pages from unauthenticated access
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" />;
   return children;
 };
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>; // prevents early redirect
 
   return (
     <NotificationProvider userId={user?.userId}>

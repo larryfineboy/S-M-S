@@ -45,12 +45,14 @@ const LoginForm = () => {
       toast.error(err.message || "Login Failed");
       const userData = {
         userId: "DBCS00124",
-        role: "admin",
-        assignedClass: "All Classes",
+        role: "student",
+        assignedClass: "JSS1",
         firstName: "John",
         lastName: "Doe",
         email: "johndoe@school.edu",
         phone: "+234 807 1056 542",
+        term: "First Term",
+        session: "2024/2025",
       };
       login(userData);
       navigate("/");
@@ -74,7 +76,7 @@ const LoginForm = () => {
         <div className="relative w-full md:max-w-sm">
           <input
             type="text"
-            value={schoolId}
+            value={schoolId.toUpperCase()}
             onChange={(e) => {
               setSchoolId(e.target.value);
               schoolId.includes("DBCS")
