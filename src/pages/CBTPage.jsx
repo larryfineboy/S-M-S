@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import ReportHeader from "../ui/ReportHeader.png";
+import ConfirmModal from "../components/ConfirmModal";
 
 const CBTPage = ({ user }) => {
   // const { state } = useLocation();
@@ -9,6 +11,7 @@ const CBTPage = ({ user }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [activeExam, setActiveExam] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     const storedExam = localStorage.getItem("activeExam");
@@ -26,7 +29,15 @@ const CBTPage = ({ user }) => {
       // navigate("/exams");
       return;
     }
-    setTimeLeft(activeExam.timeLimit * 60);
+    const now = Date.now();
+    const end = activeExam.endTime;
+    const diff = Math.max(0, Math.floor((end - now) / 1000)); // seconds left
+    setTimeLeft(diff);
+
+    if (diff <= 0) {
+      submitExam(); // auto-submit if time is already up
+    }
+    // setTimeLeft(activeExam.timeLimit * 60);
     const saved = localStorage.getItem(
       `exam_${activeExam.examId}_${user.userId}`
     );
@@ -34,9 +45,18 @@ const CBTPage = ({ user }) => {
   }, [activeExam, navigate, user.userId]);
 
   useEffect(() => {
-    if (!timeLeft || timeLeft <= 0) return;
-    const t = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    return () => clearInterval(t);
+    if (!timeLeft) return;
+    const timer = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          submitExam();
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
   }, [timeLeft]);
 
   // Auto-save answers to localStorage on change
@@ -53,13 +73,13 @@ const CBTPage = ({ user }) => {
   };
 
   const submitExam = async () => {
-    const attempted = Object.keys(answers).length;
-    if (
-      !window.confirm(
-        `You attempted ${attempted} of ${activeExam.questions.length} questions. Submit now?`
-      )
-    )
-      return;
+    // const attempted = Object.keys(answers).length;
+    // if (
+    //   !window.confirm(
+    //     `You attempted ${attempted} of ${activeExam.questions.length} questions. Submit now?`
+    //   )
+    // )
+    //   return;
 
     let correct = 0;
     activeExam.questions.forEach((q) => {
@@ -184,6 +204,13 @@ const CBTPage = ({ user }) => {
 
   return (
     <div className="p-6 space-y-6 bg-gray-100 h-screen">
+      {/* <div className="w-full rounded bg-gray-100 overflow-hidden flex-shrink-0">
+        <img
+          src={ReportHeader}
+          alt="student"
+          className="w-full h-full object-cover"
+        />
+      </div> */}
       {/* Question Area */}
       <div className="flex-1 p-6 bg-white shadow rounded">
         <div className="flex justify-between items-center mb-4">
@@ -205,8 +232,8 @@ const CBTPage = ({ user }) => {
               {(timeLeft % 60).toString().padStart(2, "0")}
             </p>
             <button
-              onClick={submitExam}
-              className="mt-6 bg-red-400 hover:bg-red-700 text-white px-4 py-2 rounded"
+              onClick={() => setShowConfirmation(true)}
+              className="mt-6 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold"
             >
               Submit Exam
             </button>
@@ -214,9 +241,13 @@ const CBTPage = ({ user }) => {
         </div>
       </div>
 
-      <div className="flex justify-around">
+      <div className="flex justify-around flex-wrap space-y-4">
         <div>
-          <div className="bg-white p-4 rounded shadow space-y-3 min-w-3xl">
+          <div
+            className={`bg-white p-4 rounded shadow space-y-3 ${
+              window.innerWidth <= 768 ? "max-w-full" : "min-w-3xl"
+            }`}
+          >
             <p className="text-lg leading-relaxed font-semibold text-gray-700">
               {currentIndex + 1}. {q.content}
             </p>
@@ -294,7 +325,7 @@ const CBTPage = ({ user }) => {
                 i === currentIndex
                   ? "bg-blue-600 text-white"
                   : answers[activeExam.questions[i].questionId]
-                  ? "bg-green-600"
+                  ? "bg-green-600 text-white"
                   : "bg-red-200 text-gray-600"
               }`}
             >
@@ -303,6 +334,15 @@ const CBTPage = ({ user }) => {
           ))}
         </div>
       </div>
+      {showConfirmation && (
+        <ConfirmModal
+          message={`You attempted ${Object.keys(answers).length} of ${
+            activeExam.questions.length
+          } questions. Submit now`}
+          onConfirm={submitExam}
+          onCancel={() => setShowConfirmation(false)}
+        />
+      )}
     </div>
   );
 };

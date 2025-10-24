@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import ExamEntries from "./ExamEntries";
+import TermSessionModal from "./TermSessionModal";
+import Tooltip from "../ui/ToolTip";
+import {
+  CalendarClock,
+  CircleCheckBig,
+  Settings2,
+  CircleX,
+  History,
+  Pen,
+  Trash,
+  Eye,
+  SquarePen,
+} from "lucide-react";
 
 const AdminExamPanel = () => {
   const [activeTab, setActiveTab] = useState("pending");
   const [pending, setPending] = useState([]);
-  const [approved, setApproved] = useState([]);
+  // const [approved, setApproved] = useState([]);
   const [scheduled, setScheduled] = useState([]);
   const [examSetup, setExamSetup] = useState({
     subject: "",
@@ -18,51 +31,127 @@ const AdminExamPanel = () => {
     numQuestions: 10,
   });
 
+  const [showModal, setShowModal] = useState(false);
+
+  const [comment, setComment] = useState(null);
+  const [showCommentBox, setShowCommentBox] = useState(false);
+
   const [editingExam, setEditingExam] = useState(null);
   const [viewingEntries, setViewingEntries] = useState(null);
 
   useEffect(() => {
-    fetch("/api/questions?status=pending")
-      .then((res) => res.json())
-      .then(setPending);
-    fetch("/api/questions?status=approved")
-      .then((res) => res.json())
-      .then(setApproved);
-    fetch("/api/exams")
-      .then((res) => res.json())
-      .then(setScheduled);
-  }, []);
+    if (activeTab === "scheduled") {
+      fetch("/api/exams")
+        .then((res) => res.json())
+        .then(setScheduled)
+        .catch(
+          () => toast.error("Failed to load scheduled exams"),
+          setScheduled(() => [
+            {
+              examId: "MS245",
+              subject: "MATHEMATICS",
+              className: "JSS1",
+              term: "Second Term",
+              session: "2024/2025",
+              scheduledDate: new Date().toISOString(),
+              timeLimit: 30,
+              numQuestions: 45,
+              questions: [
+                {
+                  questionId: `Q${2}`,
+                  content: `Sample Question ${2}?`,
+                  answerType: "multichoice",
+                  options: ["Option A", "Option B", "Option C", "Option D"],
+                  correctAnswer: "Option B",
+                  subject: "MATHEMATICS",
+                  term: "Second Term",
+                  session: "2024/2025",
+                  className: "JSS1",
+                  status: "approved",
+                },
+              ],
+            },
+          ])
+        );
+    }
+    if (activeTab === "pending") {
+      fetch("/api/questions?status=pending")
+        .then((res) => res.json())
+        .then(setPending)
+        .catch(
+          () => toast.error("Failed to load pending questions"),
+          setPending(() => [
+            {
+              questionId: `Q${2}`,
+              content: `Sample Question ${2}?`,
+              answerType: "multichoice",
+              options: ["Option A", "Option B", "Option C", "Option D"],
+              correctAnswer: "Option B",
+              subject: "Mathematics",
+              term: "Second Term",
+              session: "2024/2025",
+              className: "JSS1",
+              status: "pending",
+            },
+          ])
+        );
+    }
+  }, [activeTab]);
 
   // -------------------- PENDING --------------------
-  const approveQuestion = async (id) => {
-    await fetch(`/api/questions/${id}/approve`, { method: "PATCH" });
-    setPending((p) => p.filter((q) => q.questionId !== id));
+  const approveQuestion = async (questionId) => {
+    await fetch(`/api/questions/${questionId}/approve`, { method: "PATCH" });
+    setPending((p) => p.filter((q) => q.questionId !== questionId));
     toast.success("Question approved");
   };
 
-  const rejectQuestion = async (id, comment) => {
-    await fetch(`/api/questions/${id}/reject`, {
+  const rejectQuestion = async (questionId, comment) => {
+    await fetch(`/api/questions/${questionId}/reject`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ comment }),
     });
-    setPending((p) => p.filter((q) => q.questionId !== id));
+    setPending((p) => p.filter((q) => q.questionId !== questionId));
     toast.info("Question rejected");
   };
 
-  const approveAllInSubject = async (subject) => {
-    const qs = pending.filter((q) => q.subject === subject);
+  const approveAll = async (subject, className) => {
+    const qs = pending.filter(
+      (q) => q.subject === subject && q.className === className
+    );
+
     await Promise.all(
       qs.map((q) =>
         fetch(`/api/questions/${q.questionId}/approve`, { method: "PATCH" })
       )
     );
-    setPending((p) => p.filter((q) => q.subject !== subject));
-    toast.success(`Approved all ${qs.length} questions in ${subject}`);
+    setPending((p) =>
+      p.filter((q) => !(q.subject === subject && q.className === className))
+    );
+
+    toast.success(
+      `Approved all ${qs.length} questions in ${subject} for ${className}`
+    );
+  };
+
+  const fetchQuestions = async (subject, className, term) => {
+    const res = await fetch(
+      `/api/questions?status=approved&subject=${subject}&className=${className}&term=${term}`
+    );
+    return await res.json();
   };
 
   // -------------------- SCHEDULE --------------------
-  const selectQuestions = (numQuestions, subject, className, term, session) => {
+  const selectQuestions = async (
+    numQuestions,
+    subject,
+    className,
+    term,
+    session
+  ) => {
+    const approved = await fetchQuestions(subject, className, term);
+    if (!approved) return toast.error("Error fetching Questions");
+
     const current = approved.filter(
       (q) =>
         q.subject === subject &&
@@ -113,7 +202,7 @@ const AdminExamPanel = () => {
     } = examSetup;
 
     if (!subject || !className || !term || !session || !date || !time)
-      return toast.error("Fill all fields");
+      return toast.warn("Fill all fields");
 
     const selected = selectQuestions(
       numQuestions,
@@ -191,169 +280,280 @@ const AdminExamPanel = () => {
     toast.info("Exam deleted");
   };
 
+  const handleModalSubmit = ({ term, session, className }) => {
+    setExamSetup((prev) => ({
+      ...prev,
+      ["term"]: term,
+      ["session"]: session,
+      ["className"]: className,
+    }));
+  };
+
   const openEntries = async (examId) => {
     setViewingEntries(examId);
   };
 
+  const grouped = pending.reduce((acc, q) => {
+    if (!acc[q.className]) acc[q.className] = {};
+    if (!acc[q.className][q.subject]) acc[q.className][q.subject] = [];
+    acc[q.className][q.subject].push(q);
+    return acc;
+  }, {});
+
   return (
-    <div className="relative">
+    <div className="p-6 space-y-6">
       {/* Mini Nav */}
-      <div className="flex gap-4 border-b bg-white sticky top-0 z-10 px-6 py-3 shadow">
-        {["pending", "approved", "schedule", "scheduled"].map((tab) => (
+      <nav className="flex gap-4 p-3 bg-white shadow justify-around rounded">
+        {[
+          ["pending", "Pending Questions"],
+          ["create", "Create Exam"],
+          ["scheduled", "Scheduled Exams"],
+        ].map(([key, label]) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1  font-medium ${
-              activeTab === tab
-                ? "bg-violet-200 text-violet-600 border-violet-600 border-b-2"
-                : "text-gray-700 hover:bg-violet-100"
+            key={key}
+            onClick={() => setActiveTab(key)}
+            // We add the `group` class here to enable group-hover effects
+            className={`relative px-3 py-1 text-violet-600 font-bold group ${
+              activeTab === key ? "text-violet-600" : ""
             }`}
           >
-            {tab === "pending"
-              ? "Pending Questions"
-              : tab === "approved"
-              ? "Approved Questions"
-              : tab === "schedule"
-              ? "Schedule Exam"
-              : "Scheduled Exams"}
+            {label}
+            {/* This span will act as the expanding border */}
+            <span
+              className={`absolute inset-x-0 bottom-[-2px] h-[2px] rounded-full bg-violet-600 transition-transform duration-500 origin-left ${
+                activeTab === key
+                  ? "scale-x-100" // active state
+                  : "scale-x-0 group-hover:scale-x-100" // inactive state
+              }`}
+            ></span>
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Main Content */}
       <div className="p-6 bg-white rounded shadow">
         {/* --- PENDING --- */}
         {activeTab === "pending" && (
           <div className="space-y-6">
-            {Object.entries(
-              pending.reduce((acc, q) => {
-                acc[q.subject] = acc[q.subject] || [];
-                acc[q.subject].push(q);
-                return acc;
-              }, {})
-            ).map(([subject, qs]) => (
-              <div key={subject} className="border p-4 rounded space-y-2">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-purple-700">{subject}</h3>
-                  <button
-                    onClick={() => approveAllInSubject(subject)}
-                    className="bg-green-600 text-white px-3 py-1 rounded"
-                  >
-                    Approve All
-                  </button>
-                </div>
-                {qs.map((q) => (
+            {pending.length === 0 ? (
+              <p className="text-gray-500 font-semibold">
+                No pending questions for approval
+              </p>
+            ) : (
+              Object.entries(grouped).map(([className, subjects]) =>
+                Object.entries(subjects).map(([subject, qs]) => (
                   <div
-                    key={q.questionId}
-                    className="p-3 border rounded space-y-2"
+                    key={`${className}-${subject}`}
+                    className=" p-4 rounded space-y-2"
                   >
-                    <p className="font-medium">{q.content}</p>
-                    <div className="flex gap-2">
+                    <div className="flex justify-between items-center border-b-2 text-violet-600 p-4">
+                      <h3 className="font-bold ">
+                        {className} | {subject}
+                      </h3>
                       <button
-                        onClick={() => approveQuestion(q.questionId)}
-                        className="bg-green-500 text-white px-2 py-1 rounded"
+                        onClick={() => approveAll(subject, className)}
+                        className="bg-green-600 text-white px-3 py-2 rounded font-semibold"
                       >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => {
-                          const c = prompt("Reason for rejection?");
-                          if (c) rejectQuestion(q.questionId, c);
-                        }}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Reject
+                        Approve All
                       </button>
                     </div>
+                    {qs.map((q) => (
+                      <div
+                        key={q.questionId}
+                        className=" p-3 border border-blue-700 rounded space-y-2 text-gray-600 font-semibold"
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <div className="font-medium">{q.content}</div>
+                            <div className="text-sm ">Type: {q.answerType}</div>
+                            {q.answerType === "multichoice" ? (
+                              <div className="flex gap-2 mt-1">
+                                {q.options?.map((o, i) => (
+                                  <div
+                                    key={i}
+                                    className={`p-2 rounded text-sm ${
+                                      o === q.correctAnswer
+                                        ? "bg-green-100 text-green-600"
+                                        : "bg-gray-100"
+                                    }`}
+                                  >
+                                    {o}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="py-3">
+                                Correct Answer:{" "}
+                                <span className="bg-green-100 text-green-600 p-2 rounded text-md space-y-3">
+                                  {q.correctAnswer}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => approveQuestion(q.questionId)}
+                              className=" text-green-600 p-2 "
+                            >
+                              <Tooltip content={"Approve"}>
+                                <CircleCheckBig />
+                              </Tooltip>
+                            </button>
+                            <button
+                              onClick={() => setShowCommentBox(true)}
+                              className=" text-red-600 p-2 "
+                            >
+                              <Tooltip content={"Reject"}>
+                                <CircleX />
+                              </Tooltip>
+                            </button>
+                          </div>
+                        </div>
+                        {showCommentBox && (
+                          <div
+                            key={q.questionId}
+                            className="flex gap-2 justify-between max-h-10"
+                          >
+                            <textarea
+                              placeholder="Reason for rejection"
+                              value={comment}
+                              onChange={(e) => setComment(e.target.value)}
+                              className="w-full border text-blue-600 bg-blue-100 font-semibold rounded px-2 py-1 focus:outline-0 focus:ring-1 focus:ring-blue-400"
+                            />
+                            <button
+                              onClick={() => {
+                                rejectQuestion(q.questionId, comment);
+                                setShowCommentBox(false);
+                              }}
+                              className="bg-blue-500 text-white px-3 py-1 rounded"
+                            >
+                              Submit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* --- APPROVED --- */}
-        {activeTab === "approved" && (
-          <div className="space-y-3">
-            {approved.map((q) => (
-              <div key={q.questionId} className="border p-3 rounded">
-                <p>{q.content}</p>
-              </div>
-            ))}
+                ))
+              )
+            )}
           </div>
         )}
 
         {/* --- SCHEDULE --- */}
-        {activeTab === "schedule" && (
+        {activeTab === "create" && (
           <div className="space-y-4 text-violet-700">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex justify-between">
+              <CalendarClock />
+              <button
+                className="flex gap-3 p-2 rounded bg-violet-200 hover:bg-violet-300 font-semibold"
+                onClick={() => setShowModal(true)}
+              >
+                <Settings2 /> Setup
+              </button>
+            </div>
+
+            <div className=" p-4 space-y-4 border-t-2 border-b-2">
               {Object.keys(examSetup).map((field) => (
-                <input
-                  key={field}
-                  type={
-                    field === "date"
-                      ? "date"
-                      : field === "time"
-                      ? "time"
-                      : "text"
-                  }
-                  placeholder={field}
-                  value={examSetup[field]}
-                  onChange={(e) =>
-                    setExamSetup((prev) => ({
-                      ...prev,
-                      [field]: e.target.value,
-                    }))
-                  }
-                  className="border p-2 rounded"
-                />
+                <div className="flex gap-3 items-center">
+                  <label className="font-semibold text-md py-3">
+                    {field === "timeLimit"
+                      ? "Time Limit (mins)"
+                      : field === "numQuestions"
+                      ? "No. of Questions"
+                      : field.toUpperCase()}
+                  </label>
+                  <input
+                    key={field}
+                    type={
+                      field === "date"
+                        ? "date"
+                        : field === "time"
+                        ? "time"
+                        : "text"
+                    }
+                    placeholder={field}
+                    value={
+                      field === "subject"
+                        ? examSetup[field].toUpperCase()
+                        : examSetup[field]
+                    }
+                    disabled={
+                      field === "className" ||
+                      field === "term" ||
+                      field === "session"
+                        ? true
+                        : false
+                    }
+                    onChange={(e) =>
+                      setExamSetup((prev) => ({
+                        ...prev,
+                        [field]: e.target.value,
+                      }))
+                    }
+                    className=" border text-blue-600 bg-blue-100 font-semibold rounded px-2 py-1 focus:outline-0 focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
               ))}
             </div>
             <button
               onClick={scheduleExam}
-              className="bg-purple-600 text-white px-4 py-2 rounded"
+              className="border bg-blue-200 text-blue-600 px-4 py-2 rounded font-semibold"
             >
               Schedule
             </button>
           </div>
         )}
 
-        {/* --- SCHEDULED --- */}
+        {/* SCHEDULED TAB */}
         {activeTab === "scheduled" && (
           <div className="space-y-4">
-            {scheduled.map((ex) => (
-              <div
-                key={ex.examId}
-                className="border p-3 rounded flex justify-between"
-              >
-                <div>
-                  <p className="font-medium">{ex.subject}</p>
-                  <p className="text-sm text-gray-600">
-                    {ex.term} | {ex.session} | {ex.scheduledDate}
-                  </p>
+            <History />
+            {scheduled.length === 0 ? (
+              <p className="text-gray-500 font-semibold">No scheduled exams</p>
+            ) : (
+              scheduled.map((ex) => (
+                <div
+                  key={ex.examId}
+                  className="border p-3 rounded flex justify-between font-semibold"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {ex.subject} | {ex.className}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {ex.term} | {ex.session} | {ex.scheduledDate}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openEdit(ex)}
+                      className="text-yellow-500 hover:text-yellow-600 p-2"
+                    >
+                      <Tooltip content={"Edit"}>
+                        <Pen size={21} />
+                      </Tooltip>
+                    </button>
+                    <button
+                      onClick={() => deleteExam(ex.examId)}
+                      className="text-red-500 hover:text-red-600 p-2"
+                    >
+                      <Tooltip content={"Delete"}>
+                        <Trash size={21} />
+                      </Tooltip>
+                    </button>
+                    <button
+                      onClick={() => openEntries(ex.examId)}
+                      className="text-blue-500 hover:text-blue-600 p-2"
+                    >
+                      <Tooltip content={"View submitted entries"}>
+                        <Eye size={21} />
+                      </Tooltip>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEdit(ex)}
-                    className="bg-yellow-500 text-white px-2 py-1 rounded"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteExam(ex.examId)}
-                    className="bg-red-600 text-white px-2 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => openEntries(ex.examId)}
-                    className="bg-blue-600 text-white px-2 py-1 rounded"
-                  >
-                    View Entries
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </div>
@@ -362,30 +562,41 @@ const AdminExamPanel = () => {
       {editingExam && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow space-y-3 w-96">
-            <h3 className="font-bold text-purple-700 mb-2">Edit Exam</h3>
+            <div className="flex justify-between">
+              <h3 className="font-bold text-violet-700 mb-2 flex gap-3">
+                <SquarePen /> Edit Exam
+              </h3>
+              <button
+                onClick={() => setEditingExam(null)}
+                className="text-red-600 hover:bg-red-100 p-2 rounded-full"
+              >
+                <CircleX />
+              </button>
+            </div>
             {["date", "time", "timeLimit", "numQuestions"].map((f) => (
-              <input
-                key={f}
-                type={f === "date" ? "date" : f === "time" ? "time" : "number"}
-                value={editingExam[f]}
-                onChange={(e) =>
-                  setEditingExam((prev) => ({ ...prev, [f]: e.target.value }))
-                }
-                className="border p-2 rounded w-full"
-              />
+              <>
+                <label className="font-semibold">
+                  {f === "numQuestions" ? "No. of Questions" : f.toUpperCase()}
+                </label>
+                <input
+                  key={f}
+                  type={
+                    f === "date" ? "date" : f === "time" ? "time" : "number"
+                  }
+                  value={editingExam[f]}
+                  onChange={(e) =>
+                    setEditingExam((prev) => ({ ...prev, [f]: e.target.value }))
+                  }
+                  className="w-full border text-blue-600 bg-blue-100 font-semibold rounded px-2 py-1 focus:outline-0 focus:ring-1 focus:ring-blue-400"
+                />
+              </>
             ))}
             <div className="flex gap-2 justify-end">
               <button
                 onClick={saveEdit}
-                className="bg-purple-600 text-white px-3 py-1 rounded"
+                className=" text-violet-600 border hover:bg-violet-200 px-3 py-1 rounded font-semibold"
               >
                 Save
-              </button>
-              <button
-                onClick={() => setEditingExam(null)}
-                className="px-3 py-1 border rounded"
-              >
-                Cancel
               </button>
             </div>
           </div>
@@ -397,6 +608,14 @@ const AdminExamPanel = () => {
         <ExamEntries
           examId={viewingEntries}
           onClose={() => setViewingEntries(null)}
+        />
+      )}
+      {showModal && (
+        <TermSessionModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleModalSubmit}
+          userRole={"admin"}
         />
       )}
     </div>

@@ -45,7 +45,7 @@ const LoginForm = () => {
       toast.error(err.message || "Login Failed");
       const userData = {
         userId: "DBCS00124",
-        role: "student",
+        role: "admin",
         assignedClass: "JSS1",
         firstName: "John",
         lastName: "Doe",

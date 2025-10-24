@@ -30,7 +30,7 @@ const StudentExamPanel = ({ user }) => {
         const res = await fetch(
           `/api/exams?className=${user.className}&session=${user.session}&term=${user.term}`
         ); //fetch current term and session, user property does not include term nor session
-        let data = await res.json();
+        let data = await res.json(); //Filter out exam not meant for that day
 
         // Check attempt status for each exam
         const withStatus = await Promise.all(
@@ -79,7 +79,7 @@ const StudentExamPanel = ({ user }) => {
         }
       }
 
-      // ✅ Fetch questions (or use mock fallback)
+      // Fetch questions in case questions isn't available (or use mock fallback)
       let questions = exam.questions;
       if (!questions || !questions.length) {
         if (exam.examId) {
@@ -107,22 +107,26 @@ const StudentExamPanel = ({ user }) => {
         }
       }
 
-      // ✅ Store exam persistently
-      localStorage.setItem(
-        "activeExam",
-        JSON.stringify({ ...exam, questions })
-      );
+      const startTime = Date.now();
+      const endTime = startTime + exam.timeLimit * 60 * 1000;
 
-      // ✅ Navigate to CBT
+      const activeExamData = { ...exam, questions, startTime, endTime };
+
+      localStorage.setItem("activeExam", JSON.stringify(activeExamData));
+
+      // Navigate to CBT
       navigate("/cbt");
-      // navigate("/cbt", { state: { activeExam: { ...exam, questions } } });
     } catch (err) {
       console.error(err);
       toast.error(err || "Failed to start exam");
-      // let questions = exam.questions;
-      localStorage.setItem("activeExam", JSON.stringify(exam));
+
+      const startTime = Date.now();
+      const endTime = startTime + exam.timeLimit * 60 * 1000;
+
+      const activeExamData = { ...exam, startTime, endTime };
+
+      localStorage.setItem("activeExam", JSON.stringify(activeExamData));
       navigate("/cbt");
-      // navigate("/cbt", { state: { activeExam: { ...exam, questions } } });
     }
   };
 

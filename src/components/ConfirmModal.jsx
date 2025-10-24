@@ -9,17 +9,17 @@ const ConfirmModal = ({ message, onConfirm, onCancel }) => {
         animate={{ scale: 1, opacity: 1 }}
         className="bg-white rounded-xl shadow-lg p-6 w-80 text-center"
       >
-        <p className="text-purple-700 font-semibold mb-4">{message} ?</p>
+        <p className="text-violet-700 font-semibold mb-4">{message} ?</p>
         <div className="flex justify-around">
           <button
             onClick={onConfirm}
-            className="bg-purple-400 text-white px-4 py-2 rounded hover:bg-purple-600"
+            className="bg-violet-500 text-white px-4 py-2 rounded hover:bg-violet-600"
           >
             Confirm
           </button>
           <button
             onClick={onCancel}
-            className="bg-red-400 text-white px-4 py-2 rounded hover:bg-red-500"
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
           >
             Cancel
           </button>
