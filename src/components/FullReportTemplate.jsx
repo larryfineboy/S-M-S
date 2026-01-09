@@ -249,7 +249,7 @@ export default function FullReportTemplate({
                   <input
                     type="number"
                     disabled={isRead}
-                    className=" px-2 py-1 w-20 text-blue-600 bg-blue-100 border rounded focus:ring-1 focus:ring-blue-400 font-semibold"
+                    className=" px-2 py-1 w-20 text-blue-600 bg-blue-100 border rounded focus:outline-0 focus:ring-1 focus:ring-blue-400 font-semibold"
                     value={editable?.attendance?.presentDays || ""}
                     onChange={(e) =>
                       updateAttendance({
@@ -271,7 +271,7 @@ export default function FullReportTemplate({
                   <input
                     type="number"
                     disabled={isRead}
-                    className=" px-2 py-1 w-20 text-blue-600 bg-blue-100 border rounded focus:ring-1 focus:ring-blue-400 font-semibold"
+                    className=" px-2 py-1 w-20 text-blue-600 bg-blue-100 border rounded focus:outline-0 focus:ring-1 focus:ring-blue-400 font-semibold"
                     value={editable?.attendance?.totalDays || ""}
                     onChange={(e) =>
                       updateAttendance({
@@ -293,7 +293,7 @@ export default function FullReportTemplate({
                   <input
                     type="date"
                     disabled={isRead}
-                    className="border rounded px-2 py-1 w-40 text-green-600 bg-green-100 focus:ring-1 focus:ring-green-400 font-semibold"
+                    className="border rounded px-2 py-1 w-40 text-green-600 bg-green-100 focus:outline-0 focus:ring-1 focus:ring-green-400 font-semibold"
                     value={editable?.attendance?.resumptionDate || ""}
                     onChange={(e) =>
                       updateAttendance({ resumptionDate: e.target.value })
@@ -396,7 +396,7 @@ export default function FullReportTemplate({
             <div className="font-bold text-indigo-900 mb-3">
               PERFORMANCE INDICATORS
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="flex flex-wrap gap-4 text-sm">
               {[
                 "attendance",
                 "behavior",
@@ -405,7 +405,7 @@ export default function FullReportTemplate({
                 "punctuality",
                 "proactiveness",
               ].map((key) => (
-                <div key={key} className="flex items-center gap-2">
+                <div key={key} className="flex items-center gap-3">
                   <label className="w-20 capitalize text-gray-700 font-semibold">
                     {key}
                   </label>
@@ -426,7 +426,7 @@ export default function FullReportTemplate({
                   ) : (
                     <select
                       disabled={isRead}
-                      className={`border rounded px-2 py-1 w-full font-semibold ${
+                      className={`border rounded px-2 py-1 w-full font-semibold outline-none ${
                         editable?.indicators?.[key] === "Excellent"
                           ? "text-green-600"
                           : editable?.indicators?.[key] === "Good"
@@ -460,15 +460,15 @@ export default function FullReportTemplate({
           {/* Comments */}
           <div className="  p-4 shadow rounded">
             <div className="font-bold text-indigo-900 mb-3">COMMENTS</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="flex gap-4 justify-around text-sm">
               {/* Class Teacher */}
-              <div>
+              <div className="w-full">
                 <div className="text-gray-700 font-medium mb-1">
                   Class Teacher’s Comment
                 </div>
                 <textarea
                   disabled={isRead}
-                  className="w-full border text-blue-600 bg-blue-100 font-semibold rounded px-2 py-1 min-h-[80px] focus:ring-2 focus:ring-blue-400"
+                  className="w-full border text-blue-600 bg-blue-100 font-semibold rounded px-2 py-1 min-h-[80px] focus:outline-0 focus:ring-1 focus:ring-blue-400"
                   value={editable?.comments?.teacher || ""}
                   onChange={(e) => updateComment("teacher", e.target.value)}
                 />
@@ -490,13 +490,13 @@ export default function FullReportTemplate({
                 )}
               </div>
               {/* Head Teacher */}
-              <div>
+              <div className="w-full">
                 <div className="text-gray-700 font-medium mb-1">
                   Head Teacher / Principal’s Comment
                 </div>
                 <textarea
                   disabled={isRead ? isRead : role === "admin" ? false : true}
-                  className="w-full border text-violet-600 bg-violet-100 font-semibold rounded px-2 py-1 min-h-[80px] focus:ring-2 focus:ring-violet-400"
+                  className="w-full border text-violet-600 bg-violet-100 font-semibold rounded px-2 py-1 min-h-[80px] focus:outline-0 focus:ring-1 focus:ring-violet-400"
                   value={editable?.comments?.headTeacher || ""}
                   onChange={(e) => updateComment("headTeacher", e.target.value)}
                 />

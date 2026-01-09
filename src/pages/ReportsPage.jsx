@@ -8,9 +8,8 @@ import AdminTeacherView from "../components/AdminTeacherView";
 
 const ReportsPage = ({ user }) => {
   const { role, userId, assignedClass, firstName, lastName, email } = user;
-
-  const [navOpen, setNavOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [navOpen, setNavOpen] = useState(isMobile ? false : true);
   const toggleNav = () => setNavOpen(!navOpen);
 
   useEffect(() => {

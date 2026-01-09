@@ -18,25 +18,27 @@ const NotificationModal = ({ onSelect, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white rounded-l shadow-xl p-6 w-96 max-h-[80vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl p-6 w-96 max-h-[80vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold mb-2 text-purple-500">
+          <h2 className="text-lg font-bold mb-2 text-violet-600">
             Notifications
           </h2>
           <button
-            className="mt-2 h-10 w-10 text-red-600 rounded p-2 hover:bg-red-300 hover:text-white"
+            className=" h-8 w-8 text-red-600 rounded-full p-1 hover:bg-red-600 hover:text-white font-semibold"
             onClick={onClose}
           >
             X
           </button>
         </div>
         {notifications.length === 0 ? (
-          <p className="text-gray-400 text-sm">No notifications available</p>
+          <p className="text-gray-400 font-semibold text-sm">
+            No notifications available
+          </p>
         ) : (
           notifications.map((n) => (
             <div

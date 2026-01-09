@@ -48,7 +48,7 @@ const Sidebar = ({ navOpen, toggleNav, isMobile, userRole }) => {
       initial={{ x: isMobile ? "-100%" : 0 }}
       animate={{ x: navOpen ? 0 : isMobile ? "-100%" : "-250px" }}
       transition={{ duration: 0.3 }}
-      className={`fixed z-30 top-0 left-0 h-full w-64 bg-white border-r-4 border-purple-500 p-4 text-purple-800 shadow-lg ${
+      className={`fixed z-30 top-0 left-0 h-full w-64 bg-white dark:bg-violet-900 border-r-4 border-violet-600 dark:border-white p-4 text-violet-800 dark:text-white shadow-lg ${
         isMobile ? "bg-opacity-90" : ""
       }`}
     >
@@ -66,12 +66,11 @@ const Sidebar = ({ navOpen, toggleNav, isMobile, userRole }) => {
             key={link.label}
             onClick={() => {
               navigate(link.path);
-              toggleNav(); // Close sidebar on mobile after clicking
             }}
-            className={`hover:border-l-3 border-purple-800 p-2 cursor-pointer hover:bg-purple-100 ${
+            className={`hover:border-l-3 border-violet-800 dark:border-white p-2 cursor-pointer hover:bg-violet-100 dark:hover:bg-violet-950 ${
               activePath === link.path
-                ? "bg-purple-200 font-bold border-l-3 border-purple-600"
-                : "hover:bg-purple-100"
+                ? "bg-violet-200 dark:bg-violet-950 font-semibold border-l-3 border-violet-600 hover:bg-violet-200"
+                : "hover:bg-violet-100"
             }`}
           >
             {link.label}

@@ -19,8 +19,8 @@ import ConfirmModal from "../components/ConfirmModal";
 const SettingsPage = ({ user }) => {
   const { role, firstName, lastName, userId, assignedClass, email, phone } =
     user;
-  const [navOpen, setNavOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [navOpen, setNavOpen] = useState(isMobile ? false : true);
   const [editField, setEditField] = useState(null); // 'email' or 'phone'
   const [emailInput, setEmailInput] = useState(email || "");
   const [phoneInput, setPhoneInput] = useState(phone || "");

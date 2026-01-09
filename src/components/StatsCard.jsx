@@ -40,19 +40,19 @@ const StatsCardSection = ({ userRole, userId }) => {
       {
         label: "Students",
         value: stats.students,
-        icon: <Users className="text-purple-600" />,
+        icon: <Users />,
         route: "/students",
       },
       {
         label: "Teachers",
         value: stats.teachers,
-        icon: <BookOpen className="text-purple-600" />,
+        icon: <BookOpen />,
         route: "/teachers",
       },
       {
         label: "Fees",
         value: stats.fees,
-        icon: <DollarSign className="text-purple-600" />,
+        icon: <DollarSign />,
         route: "/fees",
       }
     );
@@ -61,13 +61,13 @@ const StatsCardSection = ({ userRole, userId }) => {
       {
         label: "Students",
         value: stats.students,
-        icon: <Users className="text-purple-600" />,
+        icon: <Users />,
         route: "/students",
       },
       {
         label: "Assignments",
         value: stats.assignments,
-        icon: <ClipboardList className="text-purple-600" />,
+        icon: <ClipboardList />,
         route: "/assignments",
       }
     );
@@ -76,13 +76,13 @@ const StatsCardSection = ({ userRole, userId }) => {
       {
         label: "Assignments",
         value: stats.assignments,
-        icon: <ClipboardList className="text-purple-600" />,
+        icon: <ClipboardList />,
         route: "/assignments",
       },
       {
         label: "Fees",
         value: stats.fees,
-        icon: <DollarSign className="text-purple-600" />,
+        icon: <DollarSign />,
         route: "/fees",
       }
     );
@@ -94,13 +94,15 @@ const StatsCardSection = ({ userRole, userId }) => {
         <div
           key={label}
           onClick={() => navigate(route)}
-          className="bg-purple-100 text-purple-800 border-2 border-purple-500 shadow-lg rounded-lg p-4 cursor-pointer hover:scale-105 transition-all"
+          className="bg-violet-100 dark:bg-violet-900 backdrop-blur-lg text-violet-600 dark:text-violet-200 border-2 border-violet-600 shadow-lg rounded-lg p-4 cursor-pointer hover:scale-95 dark:hover:bg-violet-950 transition-all"
         >
           <div className="flex items-center gap-4">
-            <div className="p-2 bg-purple-200 rounded-full">{icon}</div>
+            <div className="p-2 bg-violet-400 dark:bg-violet-200 text-violet-800 dark:text-violet-600 rounded-full">
+              {icon}
+            </div>
             <div>
-              <p className="text-sm font-medium">{label}</p>
-              <h2 className="text-xl font-bold">{value ?? "-"}</h2>
+              <p className="text-base font-medium">{label}</p>
+              <h2 className="text-xl font-semibold">{value ?? "-"}</h2>
             </div>
           </div>
         </div>

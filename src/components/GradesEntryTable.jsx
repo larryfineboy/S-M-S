@@ -175,7 +175,7 @@ const GradesEntryTable = ({
 
       {/* Table */}
       <ScrollableTable>
-        <table className="min-w-max border-collapse border border-gray-300 text-sm">
+        <table className="min-w-max border-collapse border border-purple-600 text-sm">
           <thead>
             <tr className="bg-gray-100 text-violet-800">
               {isClassLevel && (
@@ -206,7 +206,7 @@ const GradesEntryTable = ({
             {(isClassLevel ? students : [students[0]]).map((student) => (
               <tr
                 key={student.studentId}
-                className="hover:bg-gray-50 transition-colors text-black"
+                className="hover:bg-gray-50 transition-colors text-blue-600"
               >
                 {isClassLevel && (
                   <td className="sticky-col border p-2 font-medium">
@@ -218,7 +218,7 @@ const GradesEntryTable = ({
                 )}
                 {subjects.map((subject) => (
                   <React.Fragment key={subject}>
-                    <td className="border p-1">
+                    <td className="border bg-blue-100 p-1 ">
                       <input
                         type="number"
                         min="0"
@@ -232,7 +232,7 @@ const GradesEntryTable = ({
                             e.target.value
                           )
                         }
-                        className="w-16 px-1 border rounded text-center"
+                        className="w-16 px-1 border rounded text-center focus:outline-0 focus:ring-1 focus:ring-blue-600 font-semibold"
                       />
                     </td>
                     <td className="border p-1">
@@ -249,7 +249,7 @@ const GradesEntryTable = ({
                             e.target.value
                           )
                         }
-                        className="w-16 px-1 border rounded text-center"
+                        className="w-16 px-1 border bg-blue-100 rounded text-center focus:outline-0 focus:ring-1 focus:ring-blue-600 font-semibold"
                       />
                     </td>
                     <td className="border p-1 text-center font-medium bg-gray-50">

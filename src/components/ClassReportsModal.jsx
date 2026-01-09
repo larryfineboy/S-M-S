@@ -52,7 +52,7 @@ const ClassReportsModal = ({
       const fetchReports = async () => {
         try {
           const res = await fetch(
-            `/api/reports/full?class=${selectedClass}&term=${term}&session=${session}`
+            `/api/reports/full?className=${selectedClass}&term=${term}&session=${session}`
           );
           const data = await res.json();
           setReports(data || []);
@@ -83,9 +83,9 @@ const ClassReportsModal = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(report),
       });
-      if (!res.ok) throw new Error("Save failed");
-      const saved = await res.json().catch(() => report);
 
+      if (!res.ok) throw new Error("Unable to save changes");
+      const saved = await res.json();
       setReports((prev) =>
         prev.map((r) =>
           r.studentId === saved.studentId &&
@@ -97,11 +97,12 @@ const ClassReportsModal = ({
       );
     } catch (err) {
       console.error(err);
-      toast.error(err);
+      toast.error(err.message);
     }
   };
 
   const approveReport = (rep) => {
+    //update to server
     const approved = {
       ...rep,
       status: "approved",
@@ -109,17 +110,6 @@ const ClassReportsModal = ({
     };
 
     saveReport(approved);
-
-    // Optionally update UI state immediately
-    setReports((prev) =>
-      prev.map((r) =>
-        r.studentId === approved.studentId &&
-        r.term === approved.term &&
-        r.session === approved.session
-          ? approved
-          : r
-      )
-    );
   };
 
   const approveAll = () => {

@@ -29,7 +29,7 @@ const StudentPage = ({ user }) => {
 
   const username = `${firstName} ${lastName}`;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [navOpen, setNavOpen] = useState(true);
+  const [navOpen, setNavOpen] = useState(isMobile ? false : true);
   const toggleNav = () => setNavOpen(!navOpen);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { RotateCw } from "lucide-react";
-import { toast } from "react-toastify";
+import { Select } from "../styles/UIComponents";
 
 const AttendanceChart = ({ userId, role, assignedClass }) => {
   const [attendanceData, setAttendanceData] = useState([]);
@@ -26,10 +26,16 @@ const AttendanceChart = ({ userId, role, assignedClass }) => {
           ? `/api/attendance?className=${assignedClass}`
           : `/api/attendance?userId=${userId}`;
       const res = await fetch(url);
+      if (!res.ok) {
+        console.warn(`Attendance API returned ${res.status}`);
+        setAttendanceData([]);
+        return;
+      }
       const data = await res.json();
       setAttendanceData(data || []);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch attendance:", err);
+      setAttendanceData([]);
     } finally {
       setLoading(false);
     }
@@ -113,34 +119,39 @@ const AttendanceChart = ({ userId, role, assignedClass }) => {
   const data = generateFilteredData();
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-md">
+    <div className="bg-white dark:bg-violet-900 p-4 rounded-xl shadow-md">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-purple-700">
+        <h3 className="text-lg font-bold text-violet-800 dark:text-violet-100">
           Attendance Overview
         </h3>
         <div className="flex gap-2">
-          <select
+          <Select
+            options={[
+              { value: "weekly", label: "Weekly" },
+              { value: "monthly", label: "Monthly" },
+              { value: "yearly", label: "Yearly" },
+            ]}
             value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-            className="border border-purple-500 text-purple-500 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
+            onChange={(val) => setViewMode(val)}
+          />
           <button
             onClick={fetchAttendance}
-            className="text-gray-500 hover:text-purple-700"
+            className="text-gray-500 dark:text-gray-300"
           >
-            <RotateCw size={18} />
+            <RotateCw
+              size={18}
+              className="active:animate-spin transition-all duration-200"
+            />
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-400 py-10">Loading...</div>
+        <div className="text-center text-base text-gray-500 dark:text-gray-300 font-medium py-10">
+          Loading...
+        </div>
       ) : data.length === 0 ? (
-        <div className="text-center text-gray-400 py-10">
+        <div className="text-center text-base text-gray-500 dark:text-gray-300 font-medium py-10">
           No attendance data found.
         </div>
       ) : (

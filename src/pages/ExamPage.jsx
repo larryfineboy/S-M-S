@@ -9,8 +9,8 @@ import { AppWindowMac } from "lucide-react";
 
 const ExamPage = ({ user }) => {
   const { role, userId, assignedClass, firstName, lastName, email } = user;
-  const [navOpen, setNavOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [navOpen, setNavOpen] = useState(isMobile ? false : true);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);

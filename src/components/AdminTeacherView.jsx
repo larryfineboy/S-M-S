@@ -55,7 +55,16 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
     },
   ];
 
-  const demoSubjects = ["Mathematics", "English", "Biology", "Chemistry"];
+  const demoSubjects = [
+    "Mathematics",
+    "English",
+    "Biology",
+    "Chemistry",
+    "G.K",
+    "Physics",
+    "CSC102",
+    "HI",
+  ];
 
   const demoReports = [
     {
@@ -73,37 +82,6 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
       type: "grades",
     },
   ];
-
-  // --- All the same logic from your ReportsPage (class fetch, students fetch, reports fetch, etc.) ---
-  // Copy your current useEffects + handlers here, unchanged.
-  // Example for fetching classes:
-  useEffect(() => {
-    if (role === "admin") {
-      const fetchClasses = async () => {
-        try {
-          const res = await fetch("/api/classes");
-          const data = await res.json();
-          setClassList(
-            data.length
-              ? data
-              : ["JSS1", "JSS2", "JSS3", "SSS1", "SSS2", "SSS3"]
-          );
-          setSelectedClass(data[0] || "JSS1");
-        } catch (err) {
-          setClassList(["JSS1", "JSS2", "JSS3", "SSS1", "SSS2", "SSS3"]);
-          setSelectedClass("JSS1");
-        }
-      };
-      fetchClasses();
-    } else {
-      setSelectedClass(assignedClass);
-    }
-  }, [role, assignedClass]);
-
-  // (...continue with your student fetching, subjects fetching, search, etc...)
-  const switchClass = (cls) => {
-    setSelectedClass(cls);
-  };
 
   // Fetch students for class-level
   useEffect(() => {
@@ -129,6 +107,41 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
     };
     fetchStudents();
   }, [role, assignedClass]);
+  // Fetch class for Admin
+  useEffect(() => {
+    if (role === "admin") {
+      const fetchClasses = async () => {
+        try {
+          const res = await fetch("/api/classes");
+          const data = await res.json();
+          if (!data) throw new Error("Erororor");
+          setClassList(
+            data.length
+              ? data
+              : ["JSS1", "JSS2", "JSS3", "SSS1", "SSS2", "SSS3"]
+          );
+          setSelectedClass(data[0] || "JSS1");
+        } catch (err) {
+          toast.error(err || "Error fetching Class");
+          setClassList(["JSS1", "JSS2", "JSS3", "SSS1", "SSS2", "SSS3"]);
+          setSelectedClass("JSS1");
+        }
+      };
+      fetchClasses();
+    } else {
+      setSelectedClass(assignedClass);
+    }
+    // setFilteredStudents(
+    //   role === "admin"
+    //     ? students.filter((s) => s.className === selectedClass)
+    //     : students
+    // );
+  }, [role, assignedClass]);
+
+  // (...continue with your student fetching, subjects fetching, search, etc...)
+  const switchClass = (cls) => {
+    setSelectedClass(cls);
+  };
 
   // Fetch subjects for selected class
   useEffect(() => {
@@ -152,7 +165,9 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
   useEffect(() => {
     if (selectedClass && students.length > 0) {
       setFilteredStudents(
-        students.filter((s) => s.className === selectedClass)
+        role === "admin"
+          ? students.filter((s) => s.className === selectedClass)
+          : students
       );
     }
   }, [selectedClass, students]);
@@ -295,7 +310,6 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
   ) => {
     try {
       if (isClassLevel) {
-        setSelectedReportType("grades");
         const res = await fetch(
           `/api/reports/grades/class?className=${className}&term=${term}&session=${session}`
         );
@@ -486,13 +500,13 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
       {/* Search */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
         <div className="relative w-full md:w-1/2">
-          <Search className="absolute left-3 top-3 text-purple-500" size={18} />
+          <Search className="absolute left-3 top-3 text-purple-600" size={18} />
           <input
             type="text"
             placeholder="Search student by name or ID"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border-2 rounded-lg border-purple-300 focus:ring-2 focus:ring-purple-400 text-purple-700"
+            className="w-full pl-10 pr-4 py-2 border-2 rounded-lg border-purple-500 focus:outline-0 focus:ring-1 focus:ring-purple-600 text-purple-600"
           />
         </div>
         {!searchTerm && !selectedStudent && (
@@ -500,6 +514,7 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
             className="flex items-center gap-2 bg-violet-600 text-white px-4 py-2 rounded hover:bg-violet-700"
             onClick={() => {
               setLinkTo("new");
+              setSelectedReportType("grades");
               handleOpenModal();
             }}
           >
@@ -549,7 +564,7 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
           {filteredStudents.map((student) => (
             <div
               key={student.studentId}
-              className="bg-white p-4 border rounded shadow hover:shadow-md cursor-pointer"
+              className="bg-white p-4 rounded shadow hover:shadow-md cursor-pointer"
               onClick={() => {
                 handleStudentSelect(student);
                 setFilteredStudents([]);
@@ -558,8 +573,10 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
               <h3 className="font-bold text-purple-700">
                 {student.firstName} {student.lastName}
               </h3>
-              <p className="text-sm text-gray-500">ID: {student.studentId}</p>
-              <p className="text-sm text-purple-500">
+              <p className="text-sm text-gray-500 font-semibold">
+                ID: {student.studentId}
+              </p>
+              <p className="text-sm text-violet-500 font-semibold">
                 Class: {student.className}
               </p>
             </div>
@@ -569,110 +586,115 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
 
       {/* Report type selection for student */}
       {selectedStudent && (
-        <div className="mt-6 bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-violet-700 mb-2">
-            {selectedStudent.firstName} {selectedStudent.lastName}
-          </h3>
-          <p className="text-sm text-red-500 mb-2">
-            Student ID: {selectedStudent.studentId}
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {["attendance", "grades", "full"].map((type) => (
-              <button
-                key={type}
-                className={`w-40 h-24 rounded shadow border flex flex-col items-center justify-center ${
-                  selectedReportType === type
-                    ? "bg-violet-600 hover:bg-purple-500 text-white"
-                    : "bg-white hover:bg-purple-100 text-purple-700"
-                }`}
-                onClick={() => setSelectedReportType(type)}
-              >
-                <FileText className="mb-1" />
-                <span className="capitalize">{type}</span>
-              </button>
-            ))}
+        <>
+          <div className="mt-6 bg-white p-4 rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-violet-700 mb-2">
+              {selectedStudent.firstName} {selectedStudent.lastName}
+            </h3>
+            <p className="text-sm text-red-500 mb-2">
+              Student ID: {selectedStudent.studentId}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {["attendance", "grades", "full"].map((type) => (
+                <button
+                  key={type}
+                  className={`w-30 h-20 rounded shadow border flex flex-col items-center justify-center font-semibold ${
+                    selectedReportType === type
+                      ? "bg-violet-600 hover:bg-purple-500 text-white"
+                      : "bg-white hover:bg-purple-100 text-purple-700"
+                  }`}
+                  onClick={() => setSelectedReportType(type)}
+                >
+                  <FileText className="mb-1" />
+                  <span className="capitalize">{type}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+          {(selectedReportType === "grades" || selectedReportType === "full") &&
+            !openedReport && (
+              <div>
+                <button
+                  className="mt-4 flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded"
+                  onClick={() => {
+                    setLinkTo("new");
+                    handleOpenModal();
+                  }}
+                >
+                  <PlusCircle size={16} /> Create New Record
+                </button>
+              </div>
+            )}
 
-      {(selectedReportType === "grades" || selectedReportType === "full") &&
-        !openedReport && (
-          <div>
-            <button
-              className="mt-4 flex items-center gap-2 bg-purple-600 text-white px-3 py-2 rounded"
-              onClick={() => {
-                setLinkTo("new");
-                handleOpenModal();
-              }}
-            >
-              <PlusCircle size={16} /> Create New Record
-            </button>
-          </div>
-        )}
+          {/* Available reports list */}
+          {selectedReportType && !openedReport && (
+            <div className="bg-white p-4 rounded shadow">
+              <h4 className="font-bold text-purple-700 mb-3">
+                Available {selectedReportType} Reports
+              </h4>
 
-      {/* Available reports list */}
-      {selectedReportType && !openedReport && (
-        <div className="bg-white p-4 rounded shadow">
-          <h4 className="font-bold text-purple-700 mb-3">
-            Available {selectedReportType} Reports
-          </h4>
+              {(() => {
+                const filteredReports = availableReports.filter(
+                  (rep) =>
+                    rep.type === selectedReportType &&
+                    rep.studentId === selectedStudent.studentId
+                );
 
-          {(() => {
-            const filteredReports = availableReports.filter(
-              (rep) =>
-                rep.type === selectedReportType &&
-                rep.studentId === selectedStudent.studentId
-            );
-
-            return filteredReports.length > 0 ? (
-              <ul className="space-y-2">
-                {filteredReports.map((rep) => (
-                  <li
-                    key={rep.id} //Change the key
-                    className="flex justify-between items-center border-b-2 p-2 rounded text-violet-800"
-                  >
-                    <span className="flex flex-col">
-                      <span className="text-xl font-bold">{rep.term}</span>
-                      <span className="text-s text-red-500">
-                        {rep.session} | {rep.className}
-                      </span>
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        className="px-2 py-1 bg-green-600 text-white rounded"
-                        onClick={() => {
-                          setOpenedReport(rep);
-                          setMode("read");
-                        }}
+                return filteredReports.length > 0 ? (
+                  <ul className="space-y-2">
+                    {filteredReports.map((rep) => (
+                      <li
+                        key={rep.id} //Change the key
+                        className="flex justify-between items-center border-b-2 p-2 rounded text-violet-800"
                       >
-                        View
-                      </button>
-                      {(selectedReportType === "grades" ||
-                        selectedReportType === "full") && (
-                        <button
-                          className="px-2 py-1 text-red-400 border border-red-400 rounded cursor-pointer"
-                          onClick={() => {
-                            setOpenedReport(rep);
-                            setMode("edit");
-                          }}
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No reports available</p>
-            );
-          })()}
-        </div>
+                        <span className="flex flex-col">
+                          <span className="text-xl font-bold">{rep.term}</span>
+                          <span className="text-s text-red-500">
+                            {rep.session} | {rep.className}
+                          </span>
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            className="px-2 py-1 bg-green-600 text-white rounded"
+                            onClick={() => {
+                              setOpenedReport(rep);
+                              setMode("read");
+                            }}
+                          >
+                            View
+                          </button>
+                          {(selectedReportType === "grades" ||
+                            selectedReportType === "full") && (
+                            <button
+                              className="px-2 py-1 text-red-400 border border-red-400 rounded cursor-pointer"
+                              onClick={() => {
+                                setOpenedReport(rep);
+                                setMode("edit");
+                              }}
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">No reports available</p>
+                );
+              })()}
+            </div>
+          )}
+        </>
       )}
 
       {/* Report details with GradesEntryTable */}
       {openedReport && selectedReportType === "grades" && (
-        <div className="bg-white p-4 rounded shadow">
+        <div
+          className={`bg-white p-4 rounded shadow ${
+            window.innerWidth <= 768 ? "max-w-screen" : "w-full"
+          }`}
+        >
           <GradesEntryTable
             students={
               openedReport.records
@@ -704,7 +726,7 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
         </div>
       )}
 
-      {selectedReportType === "attendance" && (
+      {openedReport && selectedReportType === "attendance" && (
         <p>Attendance view coming soon...</p>
       )}
       {selectedReportType === "full" && openedReport && (
@@ -725,7 +747,7 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
                 if (!res.ok) {
                   const errText = await res.text();
                   console.error("Save failed:", errText);
-                  throw new Error("Failed to save full report");
+                  throw new Error("Failed to save report");
                 }
 
                 const saved = await res.json().catch(() => payload);
@@ -749,8 +771,7 @@ const AdminTeacherView = ({ role, userId, assignedClass }) => {
                 toast.info(openedReport.id, "saved");
               } catch (e) {
                 console.error("Save error:", e);
-                toast.info(`${openedReport.id} saved!`);
-                setMode("read");
+                toast.error(e.message || "Error saving report");
               }
             }}
           />
